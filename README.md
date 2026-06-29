@@ -148,7 +148,7 @@ This repo is not just a reading list — it ships **runnable, annotated exercise
 
 | Stage | Folder | What's inside |
 |---|---|---|
-| P0 Modern C++ | [hands-on/p0-cpp/](hands-on/p0-cpp/) | pointers vs references vs value, heap memory, **RAII**, ownership & the double-free trap, Rule of Five — with notes and 3 compilable programs |
+| P0 Modern C++ | [hands-on/p0-cpp/](hands-on/p0-cpp/) | pointers vs references vs value, heap memory, **RAII**, ownership, move semantics, Rule of Five — with notes and 6 compilable programs |
 
 Each folder has a `README.md` explaining the concepts (and how they map to CUDA), plus small `.cpp` programs you build and run with `g++`. More stages land here as the roadmap progresses.
 
