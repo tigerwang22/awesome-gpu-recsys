@@ -1,4 +1,4 @@
-# P1 Week 1 - CUDA 执行模型与第一个 kernel
+# P1 - CUDA Fundamentals Hands-on
 
 > 这一周先别急着背 API。目标只有一个: 真的理解 GPU 是怎么把一个 kernel 分发给成千上万个线程的。
 > 你如果没有先吃透 thread / block / grid, 后面所有 CUDA 代码都会像天书。
@@ -11,7 +11,9 @@
 
 ---
 
-## 本周目标
+## 第 1 周 - CUDA 执行模型与第一个 kernel
+
+### 本周目标
 
 这一周你要建立 4 个最核心的直觉:
 
@@ -22,7 +24,7 @@
 
 ---
 
-## 本周练习文件
+### 本周练习文件
 
 | 文件 | 主题 | 运行 |
 |---|---|---|
@@ -208,3 +210,164 @@ GPU 上到底是谁在执行代码?
 ```text
 GPU 内存层次是什么? 为什么访问方式会决定性能?
 ```
+
+---
+
+## 第 2 周 - CUDA 内存层次、访问模式与 shared memory
+
+### 本周目标
+
+这一周要把一个关键事实吃透:
+
+> CUDA 性能往往不是先被算力卡住, 而是先被内存访问方式卡住。
+
+你会建立这 4 个核心直觉:
+
+1. GPU 有多层内存: register / shared memory / global memory / constant memory
+2. global memory 容量大, 但慢; shared memory 小得多, 但快而且能让同一个 block 协作
+3. 相邻线程访问相邻地址, 通常比相邻线程跳着访问更好, 这就是 coalescing 的直觉
+4. `__syncthreads()` 是 block 内线程协作的基本同步点
+
+### 本周练习文件
+
+| 文件 | 主题 | 运行 |
+|---|---|---|
+| 04_access_patterns.cu | 观察 coalesced vs strided 访问模式 | `nvcc -std=c++17 04_access_patterns.cu -o access && ./access` |
+| 05_shared_memory_reverse.cu | 用 shared memory 让同一个 block 里的线程协作 | `nvcc -std=c++17 05_shared_memory_reverse.cu -o reverse && ./reverse` |
+| 06_shared_memory_sum.cu | 用 shared memory 做 block 内归约求和 | `nvcc -std=c++17 06_shared_memory_sum.cu -o block_sum && ./block_sum` |
+
+---
+
+## 概念 1: CUDA 内存层次(够用版)
+
+先建立够用的层次感:
+
+- register: 每个线程自己的最快小抽屉
+- shared memory: 一个 block 内线程共享的小白板
+- global memory: 所有线程都能访问的大仓库
+- constant memory: 适合很多线程读同一份只读小数据
+
+入门阶段最重要的是这句:
+
+> 你几乎总是在和 global memory 打交道, 而很多优化本质上是在减少、重排、缓存对 global memory 的访问。
+
+---
+
+## 概念 2: 为什么 coalescing 重要
+
+看这两种访问:
+
+```text
+thread 0 -> element 0
+thread 1 -> element 1
+thread 2 -> element 2
+thread 3 -> element 3
+```
+
+这叫相邻线程访问相邻地址, 是理想模式。
+
+再看这种:
+
+```text
+thread 0 -> element 0
+thread 1 -> element 4
+thread 2 -> element 8
+thread 3 -> element 12
+```
+
+这叫 strided access, 相邻线程跳着读。通常会让内存访问更分散、效率更差。
+
+本周第一个示例 `04_access_patterns.cu` 就是把这个差别直接打印出来。
+
+---
+
+## 概念 3: shared memory 到底解决什么问题
+
+shared memory 不是"另一块普通数组", 它的真正价值是:
+
+- 比 global memory 快
+- 同一个 block 里的线程都能访问
+- 可以把会重复用的数据先搬进来, 再协作处理
+
+基本套路是:
+
+1. 每个线程从 global memory 读一点数据
+2. 写进 shared memory
+3. `__syncthreads()` 等大家都写完
+4. 再从 shared memory 里协作读取
+
+这就是 `05_shared_memory_reverse.cu` 在演示的模式。
+
+---
+
+## 概念 4: `__syncthreads()` 是干什么的
+
+这是 block 内的屏障:
+
+- 没到这里的线程, 还在前面干活
+- 到了这里的线程, 必须等同一个 block 里其他线程也到达
+- 全部线程到齐后, 才能继续往后执行
+
+最典型用途:
+
+- 前半段: 大家往 shared memory 写数据
+- `__syncthreads()`
+- 后半段: 大家安全地读别人写进去的数据
+
+如果没有这个同步点, 你可能会读到"别人还没来得及写完"的数据。
+
+---
+
+## 概念 5: 为什么 block 内归约能体现 shared memory 的价值
+
+归约(reduction)是 GPU 基础训练题之一, 例如求和:
+
+```text
+1, 2, 3, 4, 5, 6, 7, 8 -> 36
+```
+
+如果每个线程只会读自己的元素, 它们根本没法一起完成总和。
+
+shared memory + `__syncthreads()` 让一个 block 内的线程能像小组协作一样:
+
+- 先各自拿一份数据
+- 放到共享区
+- 再一轮轮合并
+
+这就是 `06_shared_memory_sum.cu` 要演示的重点。
+
+---
+
+## 这一周建议怎么学
+
+### 第一步
+
+先跑 `04_access_patterns.cu`, 看清:
+
+- 相邻线程访问连续元素是什么样
+- stride 访问长什么样
+- 为什么说"访问模式"本身就是性能问题
+
+### 第二步
+
+再跑 `05_shared_memory_reverse.cu`, 重点盯住:
+
+- `__shared__` 怎么声明
+- 为什么写完 shared memory 之后要 `__syncthreads()`
+- 每个线程怎么读到别的线程先前写下来的数据
+
+### 第三步
+
+最后跑 `06_shared_memory_sum.cu`, 理解:
+
+- block 内线程怎样合作做一件单线程做不了的事
+- 为什么 reduction 是共享内存训练题
+
+---
+
+## 学完这周, 你应该能做到
+
+- 解释 coalesced access 和 strided access 的区别
+- 看懂一个最小的 shared memory 示例
+- 理解 `__syncthreads()` 为什么必要
+- 读懂最基本的 block 内 shared-memory reduction
