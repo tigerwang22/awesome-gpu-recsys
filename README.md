@@ -22,6 +22,7 @@ If this helps you, please star the repo and contribute a resource via PR.
 - [P4 · Multi-GPU & Communication](#p4--multi-gpu--communication)
 - [P5 · HPC Data Pipelines](#p5--hpc-data-pipelines)
 - [P6 · Portfolio & Open Source](#p6--portfolio--open-source)
+- [Hands-On Exercises](#hands-on-exercises)
 - [Cloud GPU Options](#cloud-gpu-options)
 - [Core Principles](#core-principles)
 - [Contributing](#contributing)
@@ -138,6 +139,18 @@ If this helps you, please star the repo and contribute a resource via PR.
 - Turn your P2/P4 optimizations into a clean GitHub project with a write-up
 - Open a PR to Merlin / HugeCTR / DLRM (docs or a small optimization count too)
 - Write a blog post per stage — teaching is the best proof of understanding
+
+---
+
+## Hands-On Exercises
+
+This repo is not just a reading list — it ships **runnable, annotated exercises** so you learn by doing.
+
+| Stage | Folder | What's inside |
+|---|---|---|
+| P0 Modern C++ | [hands-on/p0-cpp/](hands-on/p0-cpp/) | pointers vs references vs value, heap memory, **RAII**, ownership & the double-free trap, Rule of Five — with notes and 3 compilable programs |
+
+Each folder has a `README.md` explaining the concepts (and how they map to CUDA), plus small `.cpp` programs you build and run with `g++`. More stages land here as the roadmap progresses.
 
 ---
 

@@ -1,6 +1,9 @@
 # Build artifacts
 build/
 out
+own
+raii
+a.out
 *.o
 *.obj
 *.exe
