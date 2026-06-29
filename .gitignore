@@ -1,0 +1,38 @@
+# Build artifacts
+build/
+out
+*.o
+*.obj
+*.exe
+*.out
+a.out
+
+# CUDA
+*.ptx
+*.cubin
+*.fatbin
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Profiler output
+*.nsys-rep
+*.ncu-rep
+*.qdrep
+*.sqlite
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
