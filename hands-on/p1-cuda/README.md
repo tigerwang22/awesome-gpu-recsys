@@ -517,3 +517,149 @@ CUDA events 是 GPU 时间线上的打点工具:
 - 在自己的 CUDA 程序里加上基本错误检查
 - 知道什么时候该用 `cudaDeviceSynchronize()`
 - 用 CUDA events 写出一个最小可用的 kernel timing 示例
+
+---
+
+## 第 4 周 - Pinned Memory、Streams 与 Copy/Compute Overlap
+
+### 本周目标
+
+这一周开始触碰一个很真实的 CUDA 工程问题:
+
+> 很多程序不是算得慢, 而是"搬数据 + 排队等待"太多。
+
+你会建立这 4 个核心直觉:
+
+1. pageable host memory 和 pinned host memory 不是一回事
+2. `cudaMemcpyAsync` 真想异步得像样, 通常需要 pinned memory
+3. stream 是一条有序工作队列; 同一 stream 内操作按顺序执行, 不同 stream 才有机会并行推进
+4. 真正的 GPU 工程常常不是只优化 kernel, 还要优化 copy 和 compute 的重叠
+
+### 本周练习文件
+
+| 文件 | 主题 | 运行 |
+|---|---|---|
+| 10_pinned_copy_timing.cu | 对比 pageable vs pinned host memory 的拷贝时间 | `nvcc -std=c++17 10_pinned_copy_timing.cu -o pinned_copy && ./pinned_copy` |
+| 11_stream_pipeline.cu | 用单个 stream 串起 H2D copy、kernel、D2H copy | `nvcc -std=c++17 11_stream_pipeline.cu -o stream_pipeline && ./stream_pipeline` |
+| 12_two_stream_saxpy.cu | 用两个 stream 分块处理数据, 搭出 overlap-ready 结构 | `nvcc -std=c++17 12_two_stream_saxpy.cu -o two_stream_saxpy && ./two_stream_saxpy` |
+
+---
+
+## 概念 1: 什么是 pinned memory
+
+默认的 host 内存通常叫 pageable memory:
+
+- 操作系统可以随时把页面换进换出
+- 对 CPU 来说很普通
+- 对 GPU DMA 拷贝来说不够理想
+
+pinned memory 也叫 page-locked memory:
+
+- 这段 host 内存被锁住, 不会随意分页
+- GPU 更容易直接高效地做传输
+- 很多真正异步的 host<->device copy 都依赖它
+
+一句话:
+
+> pinned memory 不是让 kernel 算得更快, 而是让数据传输路径更像高性能路径。
+
+---
+
+## 概念 2: 为什么 `cudaMemcpyAsync` 常和 pinned memory 一起出现
+
+如果 host buffer 是 pageable:
+
+- runtime 往往要先做额外处理
+- 有时看起来像异步, 但并不是真正理想的异步传输路径
+
+如果 host buffer 是 pinned:
+
+- `cudaMemcpyAsync` 更容易走到真正适合 overlap 的路径
+
+所以工程上经常成对出现:
+
+```cpp
+cudaMallocHost(...);
+cudaMemcpyAsync(..., stream);
+```
+
+---
+
+## 概念 3: stream 是什么
+
+你可以把 stream 想成 GPU 的一条工作队列。
+
+同一条 stream 里:
+
+- H2D copy
+- kernel launch
+- D2H copy
+
+会按你入队的顺序执行。
+
+不同 stream 之间:
+
+- 才有机会并发推进
+- 具体能不能重叠, 取决于硬件能力、资源占用、copy engine、kernel 特征等
+
+先记住最核心的一句:
+
+> 同一 stream 保序, 不同 stream 才谈并发。
+
+---
+
+## 概念 4: overlap 到底想解决什么
+
+没有 overlap 时, 时间线更像:
+
+```text
+copy in -> compute -> copy out -> copy in -> compute -> copy out
+```
+
+有机会 overlap 时, 目标更像:
+
+```text
+chunk0 compute 和 chunk1 copy in 部分重叠
+chunk1 compute 和 chunk2 copy in / chunk0 copy out 部分重叠
+```
+
+也就是说:
+
+- 不让 GPU 只在等数据
+- 不让传输总在等计算
+
+这就是 Week 4 最后一份例子 `12_two_stream_saxpy.cu` 想带你看到的结构。
+
+---
+
+## 这一周建议怎么学
+
+### 第一步
+
+先跑 `10_pinned_copy_timing.cu`, 建立:
+
+- pinned memory 是什么
+- 它和 copy timing 为什么相关
+
+### 第二步
+
+再跑 `11_stream_pipeline.cu`, 看清:
+
+- 同一 stream 内 copy / kernel / copy 为什么天然保序
+- host 为什么只需要在最后同步一次
+
+### 第三步
+
+最后跑 `12_two_stream_saxpy.cu`, 理解:
+
+- 分块处理为什么是 overlap 的前提
+- 两条 stream 怎么把结构搭出来
+
+---
+
+## 学完这周, 你应该能做到
+
+- 解释 pageable host memory 和 pinned host memory 的区别
+- 看懂最小的 `cudaMemcpyAsync + stream` 示例
+- 理解为什么分块 + 多 stream 是 overlap 的基础结构
+- 对"传输也是性能瓶颈"这件事建立真实直觉
