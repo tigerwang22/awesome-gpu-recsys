@@ -371,3 +371,149 @@ shared memory + `__syncthreads()` 让一个 block 内的线程能像小组协作
 - 看懂一个最小的 shared memory 示例
 - 理解 `__syncthreads()` 为什么必要
 - 读懂最基本的 block 内 shared-memory reduction
+
+---
+
+## 第 3 周 - Error Handling、Timing 与异步执行
+
+### 本周目标
+
+这一周开始把 CUDA 代码写得更像工程代码, 而不是只停留在"能跑"。
+
+你会建立这 4 个核心直觉:
+
+1. kernel launch 默认是异步的, CPU 不会傻等 GPU 自己干完
+2. `cudaGetLastError()` 和 `cudaDeviceSynchronize()` 是两道不同类型的检查
+3. 只看 host 侧墙钟时间, 很容易把 GPU 时间量错
+4. 用 CUDA events 才能更可靠地测 kernel 时间
+
+### 本周练习文件
+
+| 文件 | 主题 | 运行 |
+|---|---|---|
+| 07_async_launch.cu | 观察 kernel launch 的异步语义 | `nvcc -std=c++17 07_async_launch.cu -o async_launch && ./async_launch` |
+| 08_checked_vector_add.cu | 用统一的错误检查模式写一个更像工程代码的 kernel 示例 | `nvcc -std=c++17 08_checked_vector_add.cu -o checked_vadd && ./checked_vadd` |
+| 09_event_timing.cu | 用 CUDA events 正确测 kernel 时间 | `nvcc -std=c++17 09_event_timing.cu -o event_timing && ./event_timing` |
+
+---
+
+## 概念 1: kernel launch 默认是异步的
+
+这句:
+
+```cpp
+myKernel<<<grid, block>>>(...);
+```
+
+并不等于:
+
+```text
+CPU 在这里等 GPU 干完再继续
+```
+
+更接近于:
+
+```text
+CPU 把活派给 GPU, 然后自己先往下走
+```
+
+所以:
+
+- launch 返回得很快, 不代表 GPU 已经算完
+- 如果你接下来马上读结果, 往往需要同步
+
+本周第一个示例 `07_async_launch.cu` 就是专门把这个事实打印出来。
+
+---
+
+## 概念 2: 两道错误检查分别在查什么
+
+最常见的工程模式是:
+
+```cpp
+myKernel<<<grid, block>>>(...);
+cudaGetLastError();
+cudaDeviceSynchronize();
+```
+
+它们不是重复:
+
+- `cudaGetLastError()`: 查 launch 本身有没有立刻出错
+- `cudaDeviceSynchronize()`: 等 GPU 真跑完, 顺便把执行阶段的错误带回来
+
+一句话:
+
+> 一个查"活有没有成功发出去", 一个查"活干的过程中有没有炸"。
+
+---
+
+## 概念 3: 为什么 host 墙钟时间容易量错
+
+如果你这样写:
+
+```cpp
+auto t0 = now();
+myKernel<<<grid, block>>>(...);
+auto t1 = now();
+```
+
+你量到的很可能只是:
+
+- CPU 发起 launch 花了多久
+
+不是:
+
+- GPU 真正执行 kernel 花了多久
+
+因为 launch 默认异步。要么显式同步后再量, 要么直接用 CUDA events。
+
+---
+
+## 概念 4: 为什么 CUDA events 更适合测 kernel 时间
+
+CUDA events 是 GPU 时间线上的打点工具:
+
+- 在 kernel 前记录一个 event
+- 在 kernel 后记录一个 event
+- 等待后者完成
+- 计算两个 event 的间隔
+
+这样量到的更接近:
+
+> GPU 真正执行这段工作花了多少时间
+
+这就是 `09_event_timing.cu` 的核心。
+
+---
+
+## 这一周建议怎么学
+
+### 第一步
+
+先跑 `07_async_launch.cu`, 看清:
+
+- 为什么 launch 之后 host 能立刻继续打印
+- 为什么 `cudaDeviceSynchronize()` 之后才算 GPU 真的完成
+
+### 第二步
+
+再跑 `08_checked_vector_add.cu`, 重点盯住:
+
+- `CHECK_CUDA(...)` 这类宏怎么包错误检查
+- 为什么 launch 后要先 `cudaGetLastError()`, 再 `cudaDeviceSynchronize()`
+
+### 第三步
+
+最后跑 `09_event_timing.cu`, 理解:
+
+- host 墙钟和 CUDA events 各自量到的是什么
+- 为什么做性能实验时要先把时间测对
+
+---
+
+## 学完这周, 你应该能做到
+
+- 解释 CUDA kernel launch 为什么默认是异步的
+- 在自己的 CUDA 程序里加上基本错误检查
+- 知道什么时候该用 `cudaDeviceSynchronize()`
+- 用 CUDA events 写出一个最小可用的 kernel timing 示例
