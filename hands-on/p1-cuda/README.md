@@ -663,3 +663,135 @@ chunk1 compute 和 chunk2 copy in / chunk0 copy out 部分重叠
 - 看懂最小的 `cudaMemcpyAsync + stream` 示例
 - 理解为什么分块 + 多 stream 是 overlap 的基础结构
 - 对"传输也是性能瓶颈"这件事建立真实直觉
+
+---
+
+## 第 5 周 - Profiling 入门: 看时间线, 找热点
+
+### 本周目标
+
+这一周开始学一件很关键的工程习惯:
+
+> 先观察, 再优化。不要靠猜。
+
+你会建立这 4 个核心直觉:
+
+1. Nsight Systems (`nsys`) 更像全局时间线: 谁在等谁、copy 和 kernel 怎么排队
+2. Nsight Compute (`ncu`) 更像单 kernel 深挖: 一个 kernel 自己跑得怎么样
+3. "很多小 kernel" 和 "少量大一点的 kernel" 在时间线上看起来很不一样
+4. profiling 的第一步不是看几百个指标, 而是先找出"时间花在哪"
+
+### 本周练习文件
+
+| 文件 | 主题 | 运行 |
+|---|---|---|
+| 13_many_small_kernels.cu | 为 `nsys` 准备的时间线样本: 很多小 kernel | `nvcc -std=c++17 13_many_small_kernels.cu -o many_small && ./many_small` |
+| 14_profile_ready_saxpy.cu | 为 `ncu` / `nsys` 准备的稳定 baseline kernel | `nvcc -std=c++17 14_profile_ready_saxpy.cu -o profile_saxpy && ./profile_saxpy` |
+| 15_grid_stride_saxpy.cu | 更像真实写法的 grid-stride loop kernel, 适合继续 profile | `nvcc -std=c++17 15_grid_stride_saxpy.cu -o grid_stride_saxpy && ./grid_stride_saxpy` |
+
+---
+
+## 概念 1: `nsys` 和 `ncu` 各看什么
+
+先用一句最短的话区分:
+
+- `nsys`: 从"整台 GPU 程序"角度看时间线
+- `ncu`: 从"某一个 kernel"角度看性能细节
+
+如果你现在的问题是:
+
+- 为什么程序在等
+- copy 和 compute 有没有重叠
+- kernel launch 是不是太碎
+
+先看 `nsys`。
+
+如果你现在的问题是:
+
+- 某个 kernel 自己为什么慢
+- 访存是不是有问题
+- 算力有没有吃满
+
+再看 `ncu`。
+
+---
+
+## 概念 2: 第一次看 timeline 先看哪三件事
+
+第一次打开 `nsys` 时间线时, 不要急着看所有轨道。
+
+先问自己三件事:
+
+1. 时间主要花在 copy 还是 kernel
+2. kernel 是不是碎成了很多很小的 launch
+3. host 有没有在不必要地同步等待
+
+如果这三件事都还没看明白, 就先别急着谈更细的优化。
+
+---
+
+## 概念 3: 为什么很多小 kernel 值得警惕
+
+如果时间线看起来像这样:
+
+```text
+launch launch launch launch launch ...
+tiny kernel tiny kernel tiny kernel ...
+```
+
+那很可能意味着:
+
+- launch overhead 占比不低
+- kernel 粒度太碎
+- GPU 可能一直在处理很多小活, 但每个活都不够大
+
+`13_many_small_kernels.cu` 就是专门给你一个这种时间线样本。
+
+---
+
+## 概念 4: 为什么要准备 profile-ready baseline
+
+做 profiling 时, 最怕的不是程序慢, 而是样本不稳定。
+
+一个好样本通常会:
+
+- 做足够多次迭代
+- 有 warmup
+- 输入规模别太小
+- 最后还能做结果校验
+
+`14_profile_ready_saxpy.cu` 和 `15_grid_stride_saxpy.cu` 就是在朝这个方向靠。
+
+---
+
+## 这一周建议怎么学
+
+### 第一步
+
+先跑 `13_many_small_kernels.cu`, 然后用 `nsys` 看时间线, 盯住:
+
+- 很多小 kernel 在时间线上是什么样
+- host 端 launch 节奏是什么样
+
+### 第二步
+
+再跑 `14_profile_ready_saxpy.cu`, 重点盯住:
+
+- 一个简单稳定的 baseline kernel 在 `nsys` / `ncu` 里是什么感觉
+- 总时间主要是不是落在 kernel 上
+
+### 第三步
+
+最后跑 `15_grid_stride_saxpy.cu`, 理解:
+
+- grid-stride loop 为什么是更真实的 CUDA kernel 写法
+- profiling 的对象怎么逐渐从"玩具代码"走向"更像项目代码"
+
+---
+
+## 学完这周, 你应该能做到
+
+- 知道 `nsys` 和 `ncu` 的职责分工
+- 打开时间线后先找大头时间花在哪
+- 识别"很多小 kernel"这类常见时间线特征
+- 为后面的性能优化准备更像样的 profiling 样本

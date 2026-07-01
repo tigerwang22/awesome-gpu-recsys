@@ -16,6 +16,7 @@ __global__ void reverseWithinBlock(const int* input, int* output, int n) {
     int globalIdx = blockIdx.x * blockDim.x + threadIdx.x;
     int localIdx = threadIdx.x;
 
+    
     if (globalIdx < n) {
         tile[localIdx] = input[globalIdx];
     }
