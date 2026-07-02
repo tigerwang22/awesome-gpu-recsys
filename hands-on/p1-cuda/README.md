@@ -795,3 +795,131 @@ tiny kernel tiny kernel tiny kernel ...
 - 打开时间线后先找大头时间花在哪
 - 识别"很多小 kernel"这类常见时间线特征
 - 为后面的性能优化准备更像样的 profiling 样本
+
+---
+
+## 第 6 周 - 优化入口: Launch Config、Occupancy 与 Kernel Fusion
+
+### 本周目标
+
+这一周不追求"一下子优化十倍", 先建立三个很重要的性能直觉:
+
+1. 同一个 kernel, block size 不同, 表现可能明显不同
+2. occupancy 是一个有用的起点指标, 但不是唯一目标
+3. 很多小 kernel 有时不如把工作融合到更少的 launch 里
+
+### 本周练习文件
+
+| 文件 | 主题 | 运行 |
+|---|---|---|
+| w6_01_block_size_sweep.cu | 扫不同 `threadsPerBlock`, 感受 launch config 对时间的影响 | `nvcc -std=c++17 w6_01_block_size_sweep.cu -o block_size_sweep && ./block_size_sweep` |
+| w6_02_occupancy_hint.cu | 用 `cudaOccupancyMaxPotentialBlockSize` 拿到 block size 起步建议 | `nvcc -std=c++17 w6_02_occupancy_hint.cu -o occupancy_hint && ./occupancy_hint` |
+| w6_03_fused_vs_many_kernels.cu | 对比很多小 launch 和一个融合 kernel 的结构差异 | `nvcc -std=c++17 w6_03_fused_vs_many_kernels.cu -o fused_vs_many && ./fused_vs_many` |
+
+---
+
+## 概念 1: Launch Config 为什么值得试
+
+一维 kernel 里最常见的可调参数就是:
+
+```cpp
+<<<blocks, threadsPerBlock>>>
+```
+
+很多初学者会把 `threadsPerBlock` 当成随便填的数字, 但它会影响:
+
+- 一个 block 里线程数
+- 寄存器 / shared memory 资源切分
+- 同时能驻留多少 block
+- 最终的 occupancy 和吞吐
+
+本周第一份示例 `w6_01_block_size_sweep.cu` 就是让你直接跑几个常见配置, 看时间差别。
+
+---
+
+## 概念 2: Occupancy 是什么
+
+先记最够用的版本:
+
+- occupancy 描述的是 SM 上活跃 warp 相对理论上限的比例
+- 它反映"机器有没有被足够多的活填起来"
+
+但要特别注意:
+
+> occupancy 高不等于性能一定最好, 它只是一个起点信号, 不是终点答案。
+
+如果一个 kernel 明显受内存访问限制, 光把 occupancy 提高不一定解决问题。
+
+---
+
+## 概念 3: `cudaOccupancyMaxPotentialBlockSize` 有什么用
+
+这是一个很实用的 API:
+
+- 你给它一个 kernel
+- 它帮你给出一个"潜在可行的 block size 起点"
+
+这不是神谕, 也不是最终答案, 但非常适合:
+
+- 避免完全瞎猜 block size
+- 给 block size sweep 一个合理起点
+
+这就是 `w6_02_occupancy_hint.cu` 的重点。
+
+---
+
+## 概念 4: Kernel Fusion 在解决什么问题
+
+如果程序长这样:
+
+```text
+launch launch launch launch ...
+tiny work tiny work tiny work ...
+```
+
+那很可能:
+
+- launch overhead 不低
+- 时间线很碎
+- GPU 一直在接很多小任务
+
+一种常见优化思路就是 fusion:
+
+- 把原本分散在多个 kernel 里的工作
+- 尽量合到更少的 launch 里
+
+`w6_03_fused_vs_many_kernels.cu` 就是用一个很小的例子把这个结构对比跑出来。
+
+---
+
+## 这一周建议怎么学
+
+### 第一步
+
+先跑 `w6_01_block_size_sweep.cu`, 感受:
+
+- 同一个 kernel 在 64 / 128 / 256 / 512 threads per block 下会不会有差别
+- 为什么 launch config 不是随便填的
+
+### 第二步
+
+再跑 `w6_02_occupancy_hint.cu`, 重点盯住:
+
+- occupancy API 给了什么建议
+- 建议值和你手工 sweep 的结果是不是一致
+
+### 第三步
+
+最后跑 `w6_03_fused_vs_many_kernels.cu`, 理解:
+
+- 很多小 launch 的时间结构
+- 融合 kernel 为什么经常更值得考虑
+
+---
+
+## 学完这周, 你应该能做到
+
+- 知道为什么 block size 值得 sweep
+- 会用 occupancy API 拿一个 block size 起步建议
+- 理解 kernel fusion 在解决什么问题
+- 为后面真正进入 kernel 优化打好第一层直觉

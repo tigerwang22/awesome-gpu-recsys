@@ -149,7 +149,7 @@ This repo is not just a reading list — it ships **runnable, annotated exercise
 | Stage | Folder | What's inside |
 |---|---|---|
 | P0 Modern C++ | [hands-on/p0-cpp/](hands-on/p0-cpp/) | pointers vs references vs value, heap memory, **RAII**, ownership, move semantics, Rule of Five — with notes and 6 compilable programs |
-| P1 CUDA Fundamentals | [hands-on/p1-cuda/](hands-on/p1-cuda/) | CUDA execution model, indexing, first kernel, vector add, memory access patterns, shared memory, error checking, timing, pinned memory, streams, profiling — with notes, 1 CPU simulator, and 15 CUDA examples |
+| P1 CUDA Fundamentals | [hands-on/p1-cuda/](hands-on/p1-cuda/) | CUDA execution model, indexing, first kernel, vector add, memory access patterns, shared memory, error checking, timing, pinned memory, streams, profiling, optimization basics — with notes, 1 CPU simulator, and 18 CUDA examples |
 
 Each folder has a `README.md` explaining the concepts (and how they map to CUDA), plus small `.cpp` programs you build and run with `g++`. More stages land here as the roadmap progresses.
 
