@@ -1,6 +1,6 @@
 // P1 Week 3 - add basic CUDA error checking.
 // Build & run:
-//   nvcc -std=c++17 08_checked_vector_add.cu -o checked_vadd && ./checked_vadd
+//   nvcc -std=c++17 w3_02_checked_vector_add.cu -o checked_vadd && ./checked_vadd
 //
 // This is a more engineering-style vector add:
 // - wraps CUDA API calls with a check macro

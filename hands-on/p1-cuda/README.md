@@ -28,12 +28,12 @@
 
 | 文件 | 主题 | 运行 |
 |---|---|---|
-| 00_indexing_sim.cpp | 用 CPU 模拟 CUDA 的 block/thread 索引, 当前机器可直接运行 | `g++ -std=c++17 -O2 00_indexing_sim.cpp -o sim && ./sim` |
-| 01_hello_kernel.cu | 第一个最小 kernel, 观察很多线程同时打印 | `nvcc -std=c++17 01_hello_kernel.cu -o hello && ./hello` |
-| 02_thread_indexing.cu | 观察 `threadIdx.x / blockIdx.x / blockDim.x` 和全局索引 | `nvcc -std=c++17 02_thread_indexing.cu -o indexing && ./indexing` |
-| 03_vector_add.cu | 第一个真正有数值意义的 kernel: 向量加法 | `nvcc -std=c++17 03_vector_add.cu -o vadd && ./vadd` |
+| w1_01_indexing_sim.cpp | 用 CPU 模拟 CUDA 的 block/thread 索引, 当前机器可直接运行 | `g++ -std=c++17 -O2 w1_01_indexing_sim.cpp -o sim && ./sim` |
+| w1_02_hello_kernel.cu | 第一个最小 kernel, 观察很多线程同时打印 | `nvcc -std=c++17 w1_02_hello_kernel.cu -o hello && ./hello` |
+| w1_03_thread_indexing.cu | 观察 `threadIdx.x / blockIdx.x / blockDim.x` 和全局索引 | `nvcc -std=c++17 w1_03_thread_indexing.cu -o indexing && ./indexing` |
+| w1_04_vector_add.cu | 第一个真正有数值意义的 kernel: 向量加法 | `nvcc -std=c++17 w1_04_vector_add.cu -o vadd && ./vadd` |
 
-如果你当前没有 `nvcc`, 先把 `00_indexing_sim.cpp` 吃透, 再看 `.cu` 文件。等你切到 CUDA 环境时, 学习路径是无缝的。
+如果你当前没有 `nvcc`, 先把 `w1_01_indexing_sim.cpp` 吃透, 再看 `.cu` 文件。等你切到 CUDA 环境时, 学习路径是无缝的。
 
 ---
 
@@ -131,7 +131,7 @@ if (idx < n) {
 - 算出当前线程负责哪个元素
 - 如果没越界, 就处理这个元素
 
-这就是 `03_vector_add.cu` 的核心。
+这就是 `w1_04_vector_add.cu` 的核心。
 
 ---
 
@@ -164,7 +164,7 @@ if (idx < n) {
 
 ### 第一步
 
-先跑 `00_indexing_sim.cpp`, 直到你能脱口而出:
+先跑 `w1_01_indexing_sim.cpp`, 直到你能脱口而出:
 
 - `threadIdx.x` 是什么
 - `blockIdx.x` 是什么
@@ -172,7 +172,7 @@ if (idx < n) {
 
 ### 第二步
 
-读 `01_hello_kernel.cu` 和 `02_thread_indexing.cu`, 把 CUDA 语法样子认熟:
+读 `w1_02_hello_kernel.cu` 和 `w1_03_thread_indexing.cu`, 把 CUDA 语法样子认熟:
 
 - `__global__`
 - `<<<grid, block>>>`
@@ -180,7 +180,7 @@ if (idx < n) {
 
 ### 第三步
 
-最后读 `03_vector_add.cu`, 重点盯住:
+最后读 `w1_04_vector_add.cu`, 重点盯住:
 
 - kernel 里那 3 行索引逻辑
 - host 侧的 `cudaMalloc/cudaMemcpy/cudaFree`
@@ -232,9 +232,9 @@ GPU 内存层次是什么? 为什么访问方式会决定性能?
 
 | 文件 | 主题 | 运行 |
 |---|---|---|
-| 04_access_patterns.cu | 观察 coalesced vs strided 访问模式 | `nvcc -std=c++17 04_access_patterns.cu -o access && ./access` |
-| 05_shared_memory_reverse.cu | 用 shared memory 让同一个 block 里的线程协作 | `nvcc -std=c++17 05_shared_memory_reverse.cu -o reverse && ./reverse` |
-| 06_shared_memory_sum.cu | 用 shared memory 做 block 内归约求和 | `nvcc -std=c++17 06_shared_memory_sum.cu -o block_sum && ./block_sum` |
+| w2_01_access_patterns.cu | 观察 coalesced vs strided 访问模式 | `nvcc -std=c++17 w2_01_access_patterns.cu -o access && ./access` |
+| w2_02_shared_memory_reverse.cu | 用 shared memory 让同一个 block 里的线程协作 | `nvcc -std=c++17 w2_02_shared_memory_reverse.cu -o reverse && ./reverse` |
+| w2_03_shared_memory_sum.cu | 用 shared memory 做 block 内归约求和 | `nvcc -std=c++17 w2_03_shared_memory_sum.cu -o block_sum && ./block_sum` |
 
 ---
 
@@ -277,7 +277,7 @@ thread 3 -> element 12
 
 这叫 strided access, 相邻线程跳着读。通常会让内存访问更分散、效率更差。
 
-本周第一个示例 `04_access_patterns.cu` 就是把这个差别直接打印出来。
+本周第一个示例 `w2_01_access_patterns.cu` 就是把这个差别直接打印出来。
 
 ---
 
@@ -296,7 +296,7 @@ shared memory 不是"另一块普通数组", 它的真正价值是:
 3. `__syncthreads()` 等大家都写完
 4. 再从 shared memory 里协作读取
 
-这就是 `05_shared_memory_reverse.cu` 在演示的模式。
+这就是 `w2_02_shared_memory_reverse.cu` 在演示的模式。
 
 ---
 
@@ -334,7 +334,7 @@ shared memory + `__syncthreads()` 让一个 block 内的线程能像小组协作
 - 放到共享区
 - 再一轮轮合并
 
-这就是 `06_shared_memory_sum.cu` 要演示的重点。
+这就是 `w2_03_shared_memory_sum.cu` 要演示的重点。
 
 ---
 
@@ -342,7 +342,7 @@ shared memory + `__syncthreads()` 让一个 block 内的线程能像小组协作
 
 ### 第一步
 
-先跑 `04_access_patterns.cu`, 看清:
+先跑 `w2_01_access_patterns.cu`, 看清:
 
 - 相邻线程访问连续元素是什么样
 - stride 访问长什么样
@@ -350,7 +350,7 @@ shared memory + `__syncthreads()` 让一个 block 内的线程能像小组协作
 
 ### 第二步
 
-再跑 `05_shared_memory_reverse.cu`, 重点盯住:
+再跑 `w2_02_shared_memory_reverse.cu`, 重点盯住:
 
 - `__shared__` 怎么声明
 - 为什么写完 shared memory 之后要 `__syncthreads()`
@@ -358,7 +358,7 @@ shared memory + `__syncthreads()` 让一个 block 内的线程能像小组协作
 
 ### 第三步
 
-最后跑 `06_shared_memory_sum.cu`, 理解:
+最后跑 `w2_03_shared_memory_sum.cu`, 理解:
 
 - block 内线程怎样合作做一件单线程做不了的事
 - 为什么 reduction 是共享内存训练题
@@ -391,9 +391,9 @@ shared memory + `__syncthreads()` 让一个 block 内的线程能像小组协作
 
 | 文件 | 主题 | 运行 |
 |---|---|---|
-| 07_async_launch.cu | 观察 kernel launch 的异步语义 | `nvcc -std=c++17 07_async_launch.cu -o async_launch && ./async_launch` |
-| 08_checked_vector_add.cu | 用统一的错误检查模式写一个更像工程代码的 kernel 示例 | `nvcc -std=c++17 08_checked_vector_add.cu -o checked_vadd && ./checked_vadd` |
-| 09_event_timing.cu | 用 CUDA events 正确测 kernel 时间 | `nvcc -std=c++17 09_event_timing.cu -o event_timing && ./event_timing` |
+| w3_01_async_launch.cu | 观察 kernel launch 的异步语义 | `nvcc -std=c++17 w3_01_async_launch.cu -o async_launch && ./async_launch` |
+| w3_02_checked_vector_add.cu | 用统一的错误检查模式写一个更像工程代码的 kernel 示例 | `nvcc -std=c++17 w3_02_checked_vector_add.cu -o checked_vadd && ./checked_vadd` |
+| w3_03_event_timing.cu | 用 CUDA events 正确测 kernel 时间 | `nvcc -std=c++17 w3_03_event_timing.cu -o event_timing && ./event_timing` |
 
 ---
 
@@ -422,7 +422,7 @@ CPU 把活派给 GPU, 然后自己先往下走
 - launch 返回得很快, 不代表 GPU 已经算完
 - 如果你接下来马上读结果, 往往需要同步
 
-本周第一个示例 `07_async_launch.cu` 就是专门把这个事实打印出来。
+本周第一个示例 `w3_01_async_launch.cu` 就是专门把这个事实打印出来。
 
 ---
 
@@ -482,7 +482,7 @@ CUDA events 是 GPU 时间线上的打点工具:
 
 > GPU 真正执行这段工作花了多少时间
 
-这就是 `09_event_timing.cu` 的核心。
+这就是 `w3_03_event_timing.cu` 的核心。
 
 ---
 
@@ -490,21 +490,21 @@ CUDA events 是 GPU 时间线上的打点工具:
 
 ### 第一步
 
-先跑 `07_async_launch.cu`, 看清:
+先跑 `w3_01_async_launch.cu`, 看清:
 
 - 为什么 launch 之后 host 能立刻继续打印
 - 为什么 `cudaDeviceSynchronize()` 之后才算 GPU 真的完成
 
 ### 第二步
 
-再跑 `08_checked_vector_add.cu`, 重点盯住:
+再跑 `w3_02_checked_vector_add.cu`, 重点盯住:
 
 - `CHECK_CUDA(...)` 这类宏怎么包错误检查
 - 为什么 launch 后要先 `cudaGetLastError()`, 再 `cudaDeviceSynchronize()`
 
 ### 第三步
 
-最后跑 `09_event_timing.cu`, 理解:
+最后跑 `w3_03_event_timing.cu`, 理解:
 
 - host 墙钟和 CUDA events 各自量到的是什么
 - 为什么做性能实验时要先把时间测对
@@ -539,9 +539,9 @@ CUDA events 是 GPU 时间线上的打点工具:
 
 | 文件 | 主题 | 运行 |
 |---|---|---|
-| 10_pinned_copy_timing.cu | 对比 pageable vs pinned host memory 的拷贝时间 | `nvcc -std=c++17 10_pinned_copy_timing.cu -o pinned_copy && ./pinned_copy` |
-| 11_stream_pipeline.cu | 用单个 stream 串起 H2D copy、kernel、D2H copy | `nvcc -std=c++17 11_stream_pipeline.cu -o stream_pipeline && ./stream_pipeline` |
-| 12_two_stream_saxpy.cu | 用两个 stream 分块处理数据, 搭出 overlap-ready 结构 | `nvcc -std=c++17 12_two_stream_saxpy.cu -o two_stream_saxpy && ./two_stream_saxpy` |
+| w4_01_pinned_copy_timing.cu | 对比 pageable vs pinned host memory 的拷贝时间 | `nvcc -std=c++17 w4_01_pinned_copy_timing.cu -o pinned_copy && ./pinned_copy` |
+| w4_02_stream_pipeline.cu | 用单个 stream 串起 H2D copy、kernel、D2H copy | `nvcc -std=c++17 w4_02_stream_pipeline.cu -o stream_pipeline && ./stream_pipeline` |
+| w4_03_two_stream_saxpy.cu | 用两个 stream 分块处理数据, 搭出 overlap-ready 结构 | `nvcc -std=c++17 w4_03_two_stream_saxpy.cu -o two_stream_saxpy && ./two_stream_saxpy` |
 
 ---
 
@@ -628,7 +628,7 @@ chunk1 compute 和 chunk2 copy in / chunk0 copy out 部分重叠
 - 不让 GPU 只在等数据
 - 不让传输总在等计算
 
-这就是 Week 4 最后一份例子 `12_two_stream_saxpy.cu` 想带你看到的结构。
+这就是 Week 4 最后一份例子 `w4_03_two_stream_saxpy.cu` 想带你看到的结构。
 
 ---
 
@@ -636,21 +636,21 @@ chunk1 compute 和 chunk2 copy in / chunk0 copy out 部分重叠
 
 ### 第一步
 
-先跑 `10_pinned_copy_timing.cu`, 建立:
+先跑 `w4_01_pinned_copy_timing.cu`, 建立:
 
 - pinned memory 是什么
 - 它和 copy timing 为什么相关
 
 ### 第二步
 
-再跑 `11_stream_pipeline.cu`, 看清:
+再跑 `w4_02_stream_pipeline.cu`, 看清:
 
 - 同一 stream 内 copy / kernel / copy 为什么天然保序
 - host 为什么只需要在最后同步一次
 
 ### 第三步
 
-最后跑 `12_two_stream_saxpy.cu`, 理解:
+最后跑 `w4_03_two_stream_saxpy.cu`, 理解:
 
 - 分块处理为什么是 overlap 的前提
 - 两条 stream 怎么把结构搭出来
@@ -685,9 +685,9 @@ chunk1 compute 和 chunk2 copy in / chunk0 copy out 部分重叠
 
 | 文件 | 主题 | 运行 |
 |---|---|---|
-| 13_many_small_kernels.cu | 为 `nsys` 准备的时间线样本: 很多小 kernel | `nvcc -std=c++17 13_many_small_kernels.cu -o many_small && ./many_small` |
-| 14_profile_ready_saxpy.cu | 为 `ncu` / `nsys` 准备的稳定 baseline kernel | `nvcc -std=c++17 14_profile_ready_saxpy.cu -o profile_saxpy && ./profile_saxpy` |
-| 15_grid_stride_saxpy.cu | 更像真实写法的 grid-stride loop kernel, 适合继续 profile | `nvcc -std=c++17 15_grid_stride_saxpy.cu -o grid_stride_saxpy && ./grid_stride_saxpy` |
+| w5_01_many_small_kernels.cu | 为 `nsys` 准备的时间线样本: 很多小 kernel | `nvcc -std=c++17 w5_01_many_small_kernels.cu -o many_small && ./many_small` |
+| w5_02_profile_ready_saxpy.cu | 为 `ncu` / `nsys` 准备的稳定 baseline kernel | `nvcc -std=c++17 w5_02_profile_ready_saxpy.cu -o profile_saxpy && ./profile_saxpy` |
+| w5_03_grid_stride_saxpy.cu | 更像真实写法的 grid-stride loop kernel, 适合继续 profile | `nvcc -std=c++17 w5_03_grid_stride_saxpy.cu -o grid_stride_saxpy && ./grid_stride_saxpy` |
 
 ---
 
@@ -745,7 +745,7 @@ tiny kernel tiny kernel tiny kernel ...
 - kernel 粒度太碎
 - GPU 可能一直在处理很多小活, 但每个活都不够大
 
-`13_many_small_kernels.cu` 就是专门给你一个这种时间线样本。
+`w5_01_many_small_kernels.cu` 就是专门给你一个这种时间线样本。
 
 ---
 
@@ -760,7 +760,7 @@ tiny kernel tiny kernel tiny kernel ...
 - 输入规模别太小
 - 最后还能做结果校验
 
-`14_profile_ready_saxpy.cu` 和 `15_grid_stride_saxpy.cu` 就是在朝这个方向靠。
+`w5_02_profile_ready_saxpy.cu` 和 `w5_03_grid_stride_saxpy.cu` 就是在朝这个方向靠。
 
 ---
 
@@ -768,21 +768,21 @@ tiny kernel tiny kernel tiny kernel ...
 
 ### 第一步
 
-先跑 `13_many_small_kernels.cu`, 然后用 `nsys` 看时间线, 盯住:
+先跑 `w5_01_many_small_kernels.cu`, 然后用 `nsys` 看时间线, 盯住:
 
 - 很多小 kernel 在时间线上是什么样
 - host 端 launch 节奏是什么样
 
 ### 第二步
 
-再跑 `14_profile_ready_saxpy.cu`, 重点盯住:
+再跑 `w5_02_profile_ready_saxpy.cu`, 重点盯住:
 
 - 一个简单稳定的 baseline kernel 在 `nsys` / `ncu` 里是什么感觉
 - 总时间主要是不是落在 kernel 上
 
 ### 第三步
 
-最后跑 `15_grid_stride_saxpy.cu`, 理解:
+最后跑 `w5_03_grid_stride_saxpy.cu`, 理解:
 
 - grid-stride loop 为什么是更真实的 CUDA kernel 写法
 - profiling 的对象怎么逐渐从"玩具代码"走向"更像项目代码"

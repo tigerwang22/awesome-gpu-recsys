@@ -1,6 +1,6 @@
 // P1 Week 2 - block-level reduction with shared memory.
 // Build & run:
-//   nvcc -std=c++17 06_shared_memory_sum.cu -o block_sum && ./block_sum
+//   nvcc -std=c++17 w2_03_shared_memory_sum.cu -o block_sum && ./block_sum
 //
 // This example uses one block of 8 threads to sum 8 values:
 //   1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 = 36

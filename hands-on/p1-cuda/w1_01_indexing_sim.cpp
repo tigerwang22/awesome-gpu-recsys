@@ -1,6 +1,6 @@
 // P1 Week 1 - simulate CUDA indexing on CPU.
 // Build & run:
-//   g++ -std=c++17 -O2 00_indexing_sim.cpp -o sim && ./sim
+//   g++ -std=c++17 -O2 w1_01_indexing_sim.cpp -o sim && ./sim
 //
 // This file is for learning the CUDA execution model even on a machine
 // without nvcc. It prints the same global index formula you will use in kernels.

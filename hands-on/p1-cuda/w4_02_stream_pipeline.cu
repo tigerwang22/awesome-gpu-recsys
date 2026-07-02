@@ -1,6 +1,6 @@
 // P1 Week 4 - use one stream as an ordered async pipeline.
 // Build & run:
-//   nvcc -std=c++17 11_stream_pipeline.cu -o stream_pipeline && ./stream_pipeline
+//   nvcc -std=c++17 w4_02_stream_pipeline.cu -o stream_pipeline && ./stream_pipeline
 
 #include <cmath>
 #include <cstdlib>

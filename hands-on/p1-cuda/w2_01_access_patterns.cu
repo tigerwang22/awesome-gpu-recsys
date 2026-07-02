@@ -1,6 +1,6 @@
 // P1 Week 2 - inspect memory access patterns.
 // Build & run:
-//   nvcc -std=c++17 04_access_patterns.cu -o access && ./access
+//   nvcc -std=c++17 w2_01_access_patterns.cu -o access && ./access
 //
 // This program prints which element each thread would read under different
 // access patterns. It is not a performance benchmark; it is a visibility tool.

@@ -1,6 +1,6 @@
 // P1 Week 2 - use shared memory inside one block.
 // Build & run:
-//   nvcc -std=c++17 05_shared_memory_reverse.cu -o reverse && ./reverse
+//   nvcc -std=c++17 w2_02_shared_memory_reverse.cu -o reverse && ./reverse
 //
 // Each thread loads one value into shared memory.
 // After __syncthreads(), each thread reads a partner position from the same tile.

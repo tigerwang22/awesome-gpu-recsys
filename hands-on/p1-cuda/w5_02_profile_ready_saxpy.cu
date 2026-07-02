@@ -1,6 +1,6 @@
 // P1 Week 5 - profile-ready SAXPY baseline.
 // Build & run:
-//   nvcc -std=c++17 14_profile_ready_saxpy.cu -o profile_saxpy && ./profile_saxpy
+//   nvcc -std=c++17 w5_02_profile_ready_saxpy.cu -o profile_saxpy && ./profile_saxpy
 //
 // Suggested profiling:
 //   nsys profile -o profile_saxpy_report ./profile_saxpy

@@ -1,6 +1,6 @@
 // P1 Week 3 - kernel launch is asynchronous.
 // Build & run:
-//   nvcc -std=c++17 07_async_launch.cu -o async_launch && ./async_launch
+//   nvcc -std=c++17 w3_01_async_launch.cu -o async_launch && ./async_launch
 //
 // This example uses a busy-wait kernel to make the timing difference visible.
 

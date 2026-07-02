@@ -1,12 +1,7 @@
-// P1 Week 5 - grid-stride SAXPY.
+// P1 Week 3 - measure kernel time with CUDA events.
 // Build & run:
-//   nvcc -std=c++17 15_grid_stride_saxpy.cu -o grid_stride_saxpy && ./grid_stride_saxpy
-//
-// Suggested profiling:
-//   nsys profile -o grid_stride_report ./grid_stride_saxpy
-//   ncu ./grid_stride_saxpy
+//   nvcc -std=c++17 w3_03_event_timing.cu -o event_timing && ./event_timing
 
-#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
@@ -23,17 +18,15 @@
         }                                                                       \
     } while (0)
 
-__global__ void saxpyGridStride(int n, float a, const float* x, float* y) {
+__global__ void saxpy(int n, float a, const float* x, float* y) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int stride = blockDim.x * gridDim.x;
-
-    for (int i = idx; i < n; i += stride) {
-        y[i] = a * x[i] + y[i];
+    if (idx < n) {
+        y[idx] = a * x[idx] + y[idx];
     }
 }
 
 int main() {
-    const int n = 1 << 24;
+    const int n = 1 << 20;
     const std::size_t bytes = n * sizeof(float);
 
     std::vector<float> hX(n, 1.0f);
@@ -47,31 +40,30 @@ int main() {
     CHECK_CUDA(cudaMemcpy(dY, hY.data(), bytes, cudaMemcpyHostToDevice));
 
     const int threadsPerBlock = 256;
-    const int blocks = 256;
+    const int blocks = (n + threadsPerBlock - 1) / threadsPerBlock;
 
-    saxpyGridStride<<<blocks, threadsPerBlock>>>(n, 2.0f, dX, dY);
+    cudaEvent_t start;
+    cudaEvent_t stop;
+    CHECK_CUDA(cudaEventCreate(&start));
+    CHECK_CUDA(cudaEventCreate(&stop));
+
+    CHECK_CUDA(cudaEventRecord(start));
+    for (int iter = 0; iter < 100; ++iter) {
+        saxpy<<<blocks, threadsPerBlock>>>(n, 2.0f, dX, dY);
+    }
     CHECK_CUDA(cudaGetLastError());
-    CHECK_CUDA(cudaDeviceSynchronize());
+    CHECK_CUDA(cudaEventRecord(stop));
+    CHECK_CUDA(cudaEventSynchronize(stop));
 
-    CHECK_CUDA(cudaMemcpy(hY.data(), dY, bytes, cudaMemcpyDeviceToHost));
+    float ms = 0.0f;
+    CHECK_CUDA(cudaEventElapsedTime(&ms, start, stop));
 
-    bool ok = true;
-    for (int i = 0; i < n; ++i) {
-        const float expected = 4.0f;
-        if (std::fabs(hY[i] - expected) > 1e-6f) {
-            std::cout << "Mismatch at " << i
-                      << ": got " << hY[i]
-                      << ", expected " << expected << "\n";
-            ok = false;
-            break;
-        }
-    }
+    std::cout << "100 SAXPY launches took about " << ms << " ms on the GPU timeline\n";
+    std::cout << "average per launch: " << (ms / 100.0f) << " ms\n";
 
-    if (ok) {
-        std::cout << "grid-stride SAXPY passed\n";
-    }
-
+    CHECK_CUDA(cudaEventDestroy(start));
+    CHECK_CUDA(cudaEventDestroy(stop));
     CHECK_CUDA(cudaFree(dX));
     CHECK_CUDA(cudaFree(dY));
-    return ok ? EXIT_SUCCESS : EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }

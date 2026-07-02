@@ -1,6 +1,6 @@
 // P1 Week 4 - compare pageable vs pinned host memory copy timing.
 // Build & run:
-//   nvcc -std=c++17 10_pinned_copy_timing.cu -o pinned_copy && ./pinned_copy
+//   nvcc -std=c++17 w4_01_pinned_copy_timing.cu -o pinned_copy && ./pinned_copy
 
 #include <cstdlib>
 #include <iostream>

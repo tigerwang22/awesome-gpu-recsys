@@ -1,6 +1,6 @@
 // P1 Week 1 - inspect CUDA thread indexing.
 // Build & run:
-//   nvcc -std=c++17 02_thread_indexing.cu -o indexing && ./indexing
+//   nvcc -std=c++17 w1_03_thread_indexing.cu -o indexing && ./indexing
 
 #include <cstdio>
 #include <cuda_runtime.h>

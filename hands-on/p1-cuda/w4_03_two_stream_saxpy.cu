@@ -1,6 +1,6 @@
 // P1 Week 4 - process two chunks with two streams.
 // Build & run:
-//   nvcc -std=c++17 12_two_stream_saxpy.cu -o two_stream_saxpy && ./two_stream_saxpy
+//   nvcc -std=c++17 w4_03_two_stream_saxpy.cu -o two_stream_saxpy && ./two_stream_saxpy
 //
 // This example is about structure, not about proving perfect overlap.
 

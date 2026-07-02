@@ -1,6 +1,6 @@
 // P1 Week 1 - the first CUDA kernel.
 // Build & run:
-//   nvcc -std=c++17 01_hello_kernel.cu -o hello && ./hello
+//   nvcc -std=c++17 w1_02_hello_kernel.cu -o hello && ./hello
 //
 // Every GPU thread runs the same kernel body once.
 

@@ -1,6 +1,6 @@
 // P1 Week 1 - vector add.
 // Build & run:
-//   nvcc -std=c++17 03_vector_add.cu -o vadd && ./vadd
+//   nvcc -std=c++17 w1_04_vector_add.cu -o vadd && ./vadd
 //
 // Each thread handles one element:
 //   c[idx] = a[idx] + b[idx]

@@ -1,6 +1,6 @@
 // P1 Week 5 - many small kernels as an Nsight Systems sample.
 // Build & run:
-//   nvcc -std=c++17 13_many_small_kernels.cu -o many_small && ./many_small
+//   nvcc -std=c++17 w5_01_many_small_kernels.cu -o many_small && ./many_small
 //
 // Suggested profiling:
 //   nsys profile -o many_small_report ./many_small
